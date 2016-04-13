@@ -3,18 +3,31 @@
 function Correct-PowerReviews ($drive) {
   $pwrzipPath = $drive + 'powerreviews\pwr.zip'
 
-  if(Zip-Modified-Today($pwrzipPath)){
+  $prodUpToDate = Prod-Up-To-Date($drive)
 
-  }else{
-    Write-Host "Contact a DBA. The pwr.zip file is old."
-  }
+  $zipModifiedToday = Zip-Modified-Today($pwrzipPath)
+
+  Write-Host "Everything is up to date in Prod."
+}
+
+Function Prod-Up-To-Date($drive){
+  $prodAreaFeatPwrPath = $drive + "midwayusa\prod\areas\features\pwr"
+  $prodContentPath = $prodAreaFeatPwrPath + "\Content"
+  $prodEnginePath = $prodAreaFeatPwrPath + "\Engine"
+  $prodM78Path = $prodAreaFeatPwrPath + "\M78z3x93"
+
+  
 }
 
 function Was-Modified-Today ($path) {
-  $item = Get-Item $path
-  $now = Get-Date
+  if(Test-Path $path){
+    $item = Get-Item $path
+    $now = Get-Date
 
-  return $item.LastWriteTime.ToShortDateString() -eq $now.ToShortDateString()
+    return $item.LastWriteTime.ToShortDateString() -eq $now.ToShortDateString()
+  }
+
+  return $false
 }
 
 function Zip-Exists($pwrzipPath){
@@ -30,7 +43,13 @@ function Zip-Exists($pwrzipPath){
 
 function Zip-Modified-Today($path){
   if(Zip-Exists($path)){
-    return Was-Modified-Today($path)
+    $modifiedToday = Was-Modified-Today($path)
+    if ($modifiedToday) {
+      return $modifiedToday
+    } else {
+      Write-Host "Contact a DBA. The pwr.zip file is old."
+      return $modifiedToday
+    }
   }
 }
 

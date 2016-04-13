@@ -2,6 +2,8 @@
 # .\Correct-PowerReviews.Tests.ps1
 # Invoke-Pester
 
+#Invoke-Pester .\Correct-PowerReviews.Tests.ps1 -CodeCoverage .\Correct-PowerReviews.ps1
+
 Import-Module Pester
 
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -111,7 +113,7 @@ Describe "Was-Modified-Today" {
   Context "It Was Modified Today"{
     Mock Get-Item {return @{LastWriteTime = $date }} -ParameterFilter {$Path -eq $path}
     Mock Test-Path {return $true } -ParameterFilter {$Path -eq $path }
-    
+
     $actual = Was-Modified-Today($path)
 
     It "Should return true" {

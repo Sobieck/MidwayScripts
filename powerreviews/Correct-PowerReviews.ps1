@@ -22,7 +22,6 @@ Function Prod-Up-To-Date($drive){
 
   if($contentModified -and $engineModified -and $m78Modified) {
     Write-Host "Everything is up to date in Prod."
-    
   }
 }
 
@@ -74,19 +73,3 @@ function Write-ZipNotFoundInstructions {
 #$allItemsInC = Get-ChildItem 'c:\' | Where-Object { $_.CreationTime -ge $thisMorning -and $_.CreationTime -le $tonight }
 #http://stackoverflow.com/a/15884384/2740086
 #http://stackoverflow.com/a/19774425/2740086
-
-
-
-#//check to see if files on the server are old
-#// check to see if the files on c:/ are new
-#// if both conditions
-#  // turn off iis
-#  // delete files from server
-#  // move files from c
-#  // delete c folder
-#  // turn on iis
-#// if files are up to date on server and iis is off
-#  // turn on iis
-#  // clean up c drive
-#// if files are not up to date and the files on c: are old
-#  // notify user

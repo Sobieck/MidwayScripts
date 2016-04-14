@@ -3,11 +3,26 @@
 function Correct-PowerReviews ($drive) {
   $pwrzipPath = $drive + 'powerreviews\pwr.zip'
 
-  $zipModifiedToday = Zip-Modified-Today $pwrzipPath
+  $zipExists = Test-Path $pwrzipPath
+
+  if($zipExists -eq $false){
+    Write-Host "The zip file isn't present."
+    Write-ZipNotFoundInstructions
+  }else{
+    Write-Host "The zip file is present."
+  }
+
+  $zipModifiedToday = Was-Modified-Today $pwrzipPath
+
+  if($zipModifiedToday -eq $false){
+    Write-Host "Contact a DBA. The pwr.zip file is old."
+  }
 
   $prodUpToDate = Prod-Up-To-Date $drive
 
   Write-Host "IIS is running."
+
+  return $zipModifiedToday
 }
 
 Function Prod-Up-To-Date($drive){
@@ -36,28 +51,6 @@ function Was-Modified-Today ($path) {
   return $false
 }
 
-function Zip-Exists($pwrzipPath){
-  IF (Test-Path $pwrzipPath){
-    Write-Host "The zip file is present."
-    return $true
-  } Else {
-    Write-Host "The zip file isn't present."
-    Write-ZipNotFoundInstructions
-    return $false
-  }
-}
-
-function Zip-Modified-Today($path){
-  if(Zip-Exists $path){
-    $modifiedToday = Was-Modified-Today $path
-    if ($modifiedToday) {
-      return $modifiedToday
-    } else {
-      Write-Host "Contact a DBA. The pwr.zip file is old."
-      return $modifiedToday
-    }
-  }
-}
 
 function Write-ZipNotFoundInstructions {
   Write-Host "Use the Power Reviews FTP Credentials in the third party contact info to download the pwr.zip file."

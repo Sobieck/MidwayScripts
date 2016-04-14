@@ -48,6 +48,10 @@ Describe "Correct-PowerReviews" {
     }
 
     It "Should Not Notify the User that everything is ok" {
+      Assert-MockCalled Write-Host -Times 0 -ParameterFilter {$Object -eq "The zip file is present."}
+    }
+
+    It "Should Not Notify the User that the zip file is present." {
       Assert-MockCalled Write-Host -Times 0 -ParameterFilter {$Object -eq "Everything is up to date in Prod."}
     }
   }
@@ -57,7 +61,8 @@ Describe "Correct-PowerReviews" {
     Mock Get-Item {return @{LastWriteTime = $yesterdayAtThisTime }} -ParameterFilter {$Path -eq $powerReviewsZip}
     Mock Write-Host { }
 
-    Correct-PowerReviews($testDrive)
+    $reuslt = Correct-PowerReviews($testDrive)
+    Write-Host $reuslt
 
     It "Should check to see if the pwr.zip file exists" {
       Assert-MockCalled Test-Path -Times 1 -ParameterFilter {$path -eq $powerReviewsZip}
@@ -76,6 +81,10 @@ Describe "Correct-PowerReviews" {
     }
 
     It "Should Not Notify the User that everything is ok" {
+      Assert-MockCalled Write-Host -Times 0 -ParameterFilter {$Object -eq "Everything is up to date in Prod."}
+    }
+
+    It "Should Not Notify the User that IIS is running" {
       Assert-MockCalled Write-Host -Times 0 -ParameterFilter {$Object -eq "Everything is up to date in Prod."}
     }
   }

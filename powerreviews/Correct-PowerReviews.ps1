@@ -3,11 +3,11 @@
 function Correct-PowerReviews ($drive) {
   $pwrzipPath = $drive + 'powerreviews\pwr.zip'
 
-  $prodUpToDate = Prod-Up-To-Date($drive)
+  $zipModifiedToday = Zip-Modified-Today $pwrzipPath
 
-  $zipModifiedToday = Zip-Modified-Today($pwrzipPath)
+  $prodUpToDate = Prod-Up-To-Date $drive
 
-  Write-Host "Everything is up to date in Prod."
+  Write-Host "IIS is running."
 }
 
 Function Prod-Up-To-Date($drive){
@@ -16,7 +16,14 @@ Function Prod-Up-To-Date($drive){
   $prodEnginePath = $prodAreaFeatPwrPath + "\Engine"
   $prodM78Path = $prodAreaFeatPwrPath + "\M78z3x93"
 
-  
+  $contentModified = Was-Modified-Today $prodContentPath
+  $engineModified = Was-Modified-Today $prodEnginePath
+  $m78Modified = Was-Modified-Today $prodM78Path
+
+  if($contentModified -and $engineModified -and $m78Modified) {
+    Write-Host "Everything is up to date in Prod."
+    
+  }
 }
 
 function Was-Modified-Today ($path) {
@@ -42,8 +49,8 @@ function Zip-Exists($pwrzipPath){
 }
 
 function Zip-Modified-Today($path){
-  if(Zip-Exists($path)){
-    $modifiedToday = Was-Modified-Today($path)
+  if(Zip-Exists $path){
+    $modifiedToday = Was-Modified-Today $path
     if ($modifiedToday) {
       return $modifiedToday
     } else {

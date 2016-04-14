@@ -95,6 +95,8 @@ Describe "Correct-PowerReviews" {
 
     Mock Write-Host { }
 
+    Mock Get-Service {return @{Status = "Running"}} -ParameterFilter {$Name -eq "W3SVC"}
+
     Correct-PowerReviews($testDrive)
 
     It "Should notify the user of that the pwr.zip file exist" {
@@ -103,6 +105,10 @@ Describe "Correct-PowerReviews" {
 
     It "Should Notify the User that everything is ok" {
       Assert-MockCalled Write-Host -Times 1 -ParameterFilter {$Object -eq "Everything is up to date in Prod."}
+    }
+
+    It "Should Notify the user that IIS is running" {
+      Assert-MockCalled Write-Host -Times 1 -ParameterFilter {$Object -eq "IIS is running."}
     }
   }
 }

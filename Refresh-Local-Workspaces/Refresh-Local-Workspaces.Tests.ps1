@@ -1,5 +1,5 @@
 # cd c:\github\midwayscripts\Refresh-Local-Workspaces
-# .\Correct-PowerReviews.Tests.ps1
+# .\Refresh-Local-Workspaces.Tests.ps1
 # Invoke-Pester
 
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -44,9 +44,11 @@ Describe "Refresh-Local-Workspaces" {
       $path4 = $workspacesFolder + $folder3
       Write-Host Update-TFSWorkspace
       Assert-MockCalled Update-TFSWorkspace -Times 1 -ParameterFilter {$Item -eq $path4}
-
     }
 
+    It 'shouuld call Update-TFSWorkspace three times' {
+      Assert-MockCalled Update-TFSWorkspace -Times 3
+    }
 
   }
 }

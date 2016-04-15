@@ -2,11 +2,19 @@ Add-PSSnapin Microsoft.TeamFoundation.PowerShell
 
 $workspaceFldr = "c:\WorkSpaces\"
 
-function Refresh-Local-Workspaces {
+Function Refresh-Local-Workspaces {
   $items = Get-ChildItem $workspaceFldr
 
   #mocking isn't working for some reason! It is extremely irritating
-  $folderToUpdate = $workspaceFldr + $items[0].Name
-  Write-Host $folderToUpdate
-  Update-TFSWorkspace -Item $folderToUpdate
+
+  Foreach ($item in $items)
+  {
+    $folderToUpdate = $workspaceFldr + $item.Name
+    Update-TFSWorkspace -Item $folderToUpdate
+  }
+}
+
+If ($args.length -gt 0 -and $args[0] -eq "run")
+{
+  Refresh-Local-Workspaces
 }

@@ -13,6 +13,8 @@ $folder2 = "banana"
 $folder3 = "fred"
 
 $path1 = $workspacesFolder + $folder1
+$path2 = $workspacesFolder + $folder2
+$path3 = $workspacesFolder + $folder3
 
 Describe "Refresh-Local-Workspaces" {
   Context "when there are local workspaces" {
@@ -22,7 +24,7 @@ Describe "Refresh-Local-Workspaces" {
                 [PSCustomObject]@{ Name = $folder3 }
             } -ParameterFilter {$Path -eq $workspacesFolder}
 
-    Mock Update-TFSWorkspace { }
+    Mock Update-TFSWorkspace { } #Used return Item as a return object to figure out what the heck the paramaters where. I Write-Hosted that object until I was able to see what was going on with the paramaters. Get-Member then gave me the properties of that object.
 
     Refresh-Local-Workspaces
 
@@ -31,23 +33,19 @@ Describe "Refresh-Local-Workspaces" {
     }
 
     It 'should call Update-TFSWorkspace with sadpanda folder.' {
-      Write-Host $path1
-      Assert-MockCalled Update-TFSWorkspace -ParameterFilter {$Item -contains  $path1}
+      Assert-MockCalled Update-TFSWorkspace -times 1 -parameterFilter {$Item[0].FileNames -eq $path1}
     }
 
     It 'should call Update-TFSWorkspace with banana folder.' {
-      $path3 = $workspacesFolder + $folder2
-      Assert-MockCalled Update-TFSWorkspace -Times 1 -ParameterFilter {$Item -eq $path3}
+      Assert-MockCalled Update-TFSWorkspace -Times 1 -ParameterFilter {$Item[0].FileNames -eq $path2}
     }
 
     It 'should call Update-TFSWorkspace with fred folder.' {
-      $path4 = $workspacesFolder + $folder3
-      Write-Host Update-TFSWorkspace
-      Assert-MockCalled Update-TFSWorkspace -Times 1 -ParameterFilter {$Item -eq $path4}
+      Assert-MockCalled Update-TFSWorkspace -Times 1 -ParameterFilter {$Item[0].FileNames -eq $path2}
     }
 
     It 'shouuld call Update-TFSWorkspace three times' {
-      Assert-MockCalled Update-TFSWorkspace -Times 3
+      Assert-MockCalled Update-TFSWorkspace -Exactly 3
     }
 
   }

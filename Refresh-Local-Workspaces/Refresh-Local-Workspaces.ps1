@@ -1,3 +1,5 @@
+#run in x64 powershell.
+
 Add-PSSnapin Microsoft.TeamFoundation.PowerShell
 
 $workspaceFldr = "c:\WorkSpaces\"
@@ -10,7 +12,7 @@ Function Refresh-Local-Workspaces {
   Foreach ($item in $items)
   {
     $folderToUpdate = $workspaceFldr + $item.Name
-    Update-TFSWorkspace -Item $folderToUpdate
+    Update-TFSWorkspace $folderToUpdate
   }
 }
 

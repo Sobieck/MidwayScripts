@@ -7,8 +7,6 @@ $workspaceFldr = "c:\WorkSpaces\"
 Function Refresh-Local-Workspaces {
   $items = Get-ChildItem $workspaceFldr
 
-  #mocking isn't working for some reason! It is extremely irritating
-
   Foreach ($item in $items)
   {
     $folderToUpdate = $workspaceFldr + $item.Name

@@ -1,4 +1,4 @@
-# cd c:\github\midwayscripts\powerreviews
+# cd c:\github\midwayscripts\Correct-PowerReviews
 # .\Correct-PowerReviews.Tests.ps1
 # Invoke-Pester
 
@@ -26,6 +26,7 @@ Describe "Correct-PowerReviews" {
     Mock Test-Path {return $false} -ParameterFilter {$Path -eq $powerReviewsZip}
     Mock Write-Host { }
     Mock Get-Item { }
+    Mock Get-Service {return @{Status = "Running"}} -ParameterFilter {$Name -eq "W3SVC"}
 
     Correct-PowerReviews($testDrive)
 
@@ -60,6 +61,7 @@ Describe "Correct-PowerReviews" {
     Mock Test-Path {return $true} -ParameterFilter {$Path -eq $powerReviewsZip }
     Mock Get-Item {return @{LastWriteTime = $yesterdayAtThisTime }} -ParameterFilter {$Path -eq $powerReviewsZip}
     Mock Write-Host { }
+    Mock Get-Service {return @{Status = "Running"}} -ParameterFilter {$Name -eq "W3SVC"}
 
     $reuslt = Correct-PowerReviews($testDrive)
     Write-Host $reuslt
@@ -89,7 +91,7 @@ Describe "Correct-PowerReviews" {
     }
   }
 
-  Context "pwr.zip does exist, it has today's date as modified, the production folders are from today and IIS is running" {
+  Context "pwr.zip does exist, it has today's date as modified, the production folders are from today" {
     Mock Test-Path {return $true} -ParameterFilter {$Path -eq $pwrzipPath }
     Mock Get-Item {return @{LastWriteTime = $date }} -ParameterFilter {$Path -eq $pwrzipPath}
 
@@ -103,21 +105,30 @@ Describe "Correct-PowerReviews" {
     Mock Get-Item {return @{LastWriteTime = $date }} -ParameterFilter {$Path -eq $prodM78Path}
 
     Mock Write-Host { }
+    Mock Start-Service { }
 
     Mock Get-Service {return @{Status = "Running"}} -ParameterFilter {$Name -eq "W3SVC"}
 
-    Correct-PowerReviews($testDrive)
-
     It "Should notify the user of that the pwr.zip file exist" {
+      Correct-PowerReviews($testDrive)
       Assert-MockCalled Write-Host -Times 1 -ParameterFilter {$Object -eq "The zip file is present."}
     }
 
     It "Should Notify the User that everything is ok" {
+      Correct-PowerReviews($testDrive)
       Assert-MockCalled Write-Host -Times 1 -ParameterFilter {$Object -eq "Everything is up to date in Prod."}
     }
 
-    It "Should Notify the user that IIS is running" {
+    It "when IIS is running it Should Notify the user that IIS is running" {
+      Correct-PowerReviews($testDrive)
       Assert-MockCalled Write-Host -Times 1 -ParameterFilter {$Object -eq "IIS is running."}
+    }
+
+    It "when IIS is not running should notify the user that IIS is not running and start IIS" {
+      Mock Get-Service {return @{Status = "Not running"}} -ParameterFilter {$Name -eq "W3SVC"}
+      Correct-PowerReviews($testDrive)
+      Assert-MockCalled Write-Host -Exactly 1 -ParameterFilter {$Object -eq "IIS is not running."}
+      Assert-MockCalled Start-Service -Exactly 1 -ParameterFilter {$DisplayName -eq "World Wide Web Publishing Service"}
     }
   }
 }

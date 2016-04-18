@@ -38,16 +38,13 @@ Describe "Correct-PowerReviews" {
   Copy-Item $currentFile $prodEnginePath
   Move-Item $currentFile $prodM78Path
 
-
   Context "pwr.zip doesn't exist" {
     Mock Write-Host { }
-    Mock Get-Item { }
+
     Mock Get-Service {return @{Status = "Running"}} -ParameterFilter {$Name -eq "W3SVC"}
 
-    $content = Get-ChildItem $prodContentPath
+    $content = Get-Item $prodContentPath
     $content.LastWriteTime = $yesterdayAtThisTime
-
-
 
     Correct-PowerReviews($testDrive)
 
@@ -59,10 +56,6 @@ Describe "Correct-PowerReviews" {
       Assert-MockCalled Write-Host -Times 1 -ParameterFilter {$Object -eq "Use the Power Reviews FTP Credentials in the third party contact info to download the pwr.zip file."}
       Assert-MockCalled Write-Host -Times 1 -ParameterFilter {$Object -eq "Drop this file into '\\a-power1\D\PowerReviews'"}
       Assert-MockCalled Write-Host -Times 1 -ParameterFilter {$Object -eq "This will be picked up by the ZipExtractor service"}
-    }
-
-    It "Should not call Get-Item" {
-      Assert-MockCalled Get-Item -Times 0
     }
 
     It "Should Not Notify the User that everything is ok" {
@@ -110,14 +103,8 @@ Describe "Correct-PowerReviews" {
     $zip = Get-Item $powerReviewsZipPath
     $zip.LastWriteTime = $now
 
-    Mock Test-Path {return $TRUE} -ParameterFilter {$Path -eq $prodContentPath }
-    Mock Get-Item {return @{LastWriteTime = $now }} -ParameterFilter {$Path -eq $prodContentPath}
-
-    Mock Test-Path {return $TRUE} -ParameterFilter {$Path -eq $prodEnginePath }
-    Mock Get-Item {return @{LastWriteTime = $now }} -ParameterFilter {$Path -eq $prodEnginePath}
-
-    Mock Test-Path {return $TRUE} -ParameterFilter {$Path -eq $prodM78Path }
-    Mock Get-Item {return @{LastWriteTime = $now }} -ParameterFilter {$Path -eq $prodM78Path}
+    $content = Get-Item $prodContentPath
+    $content.LastWriteTime = $now
 
     Mock Write-Host { }
     Mock Start-Service { }
@@ -148,19 +135,8 @@ Describe "Correct-PowerReviews" {
   }
 
   Context "pwr.zip does exist, it has today's date as modified, the at least one of the production folders are old, and the temp folders are current" {
-    Mock Test-Path {return $TRUE} -ParameterFilter {$Path -eq $pwrzipPath }
-    Mock Get-Item {return @{LastWriteTime = $now }} -ParameterFilter {$Path -eq $pwrzipPath}
-
-    Mock Test-Path {return $TRUE} -ParameterFilter {$Path -eq $prodContentPath }
-    Mock Get-Item {return @{LastWriteTime = $yesterdayAtThisTime }} -ParameterFilter {$Path -eq $prodContentPath}
-
-    Mock Test-Path {return $TRUE} -ParameterFilter {$Path -eq $prodEnginePath }
-    Mock Get-Item {return @{LastWriteTime = $now }} -ParameterFilter {$Path -eq $prodEnginePath}
-
-    Mock Test-Path {return $TRUE} -ParameterFilter {$Path -eq $prodM78Path }
-    Mock Get-Item {return @{LastWriteTime = $now }} -ParameterFilter {$Path -eq $prodM78Path}
-
-    Mock Get-ChildItem {return }
+    $content = Get-Item $prodContentPath
+    $content.LastWriteTime = $yesterdayAtThisTime
 
     It "IIS is running" {
 

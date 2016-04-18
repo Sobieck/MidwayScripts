@@ -5,7 +5,7 @@ Function Correct-PowerReviews ($drive) {
 
   $zipExists = Test-Path $pwrzipPath
 
-  If($zipExists -eq $false){
+  If($zipExists -eq $FALSE){
     Write-Host "The zip file isn't present."
     Write-ZipNotFoundInstructions
   } Else {
@@ -14,7 +14,7 @@ Function Correct-PowerReviews ($drive) {
 
   $zipModifiedToday = Was-Modified-Today $pwrzipPath
 
-  If ($zipModifiedToday -eq $false){
+  If ($zipModifiedToday -eq $FALSE){
     Write-Host "Contact a DBA. The pwr.zip file is old."
   }
 
@@ -22,15 +22,14 @@ Function Correct-PowerReviews ($drive) {
 
   $iis = Get-Service -Name "W3SVC"
 
-  If ($iis.Status -eq "Running")
-  {
+  If ($iis.Status -eq "Running") {
     Write-Host "IIS is running."
   } Else {
     Write-Host "IIS is not running."
     Start-Service -DisplayName "World Wide Web Publishing Service"
   }
 
-  return $zipModifiedToday
+  Return $zipModifiedToday
 }
 
 Function Prod-Up-To-Date($drive){
@@ -43,20 +42,20 @@ Function Prod-Up-To-Date($drive){
   $engineModified = Was-Modified-Today $prodEnginePath
   $m78Modified = Was-Modified-Today $prodM78Path
 
-  if($contentModified -and $engineModified -and $m78Modified) {
+  If($contentModified -and $engineModified -and $m78Modified) {
     Write-Host "Everything is up to date in Prod."
   }
 }
 
 Function Was-Modified-Today ($path) {
-  if(Test-Path $path){
+  If(Test-Path $path){
     $item = Get-Item $path
     $now = Get-Date
 
-    return $item.LastWriteTime.ToShortDateString() -eq $now.ToShortDateString()
+    Return $item.LastWriteTime.ToShortDateString() -eq $now.ToShortDateString()
   }
 
-  return $false
+  Return $FALSE
 }
 
 Function Write-ZipNotFoundInstructions {

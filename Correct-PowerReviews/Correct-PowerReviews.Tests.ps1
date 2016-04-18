@@ -1,6 +1,7 @@
 # cd c:\github\midwayscripts\Correct-PowerReviews
 # .\Correct-PowerReviews.Tests.ps1
 # Invoke-Pester
+# requires PSCX
 
 #Invoke-Pester .\Correct-PowerReviews.Tests.ps1 -CodeCoverage .\Correct-PowerReviews.ps1
 
@@ -11,28 +12,44 @@ $sut = (Split-Path -Leaf $MyInvocation.MyCommand.Path).Replace(".Tests.", ".")
 . "$here\$sut"
 
 $testDrive = "TestDrive:\"
-$powerReviewsZip = $testDrive + "powerreviews\pwr.zip"
+$powerReviewsZipFileName = "pwr.zip"
+$powerReviewsZipFileFolderPath = $testDrive + "powerreviews\"
+
+$currentFile = "current.txt"
+
+$powerReviewsZipPath = $powerReviewsZipFileFolderPath + $powerReviewsZipFileName
 
 $prodAreaFeatPwrPath = $testDrive + "midwayusa\prod\areas\features\pwr"
 $prodContentPath = $prodAreaFeatPwrPath + "\Content"
 $prodEnginePath = $prodAreaFeatPwrPath + "\Engine"
 $prodM78Path = $prodAreaFeatPwrPath + "\M78z3x93"
 
-$date = Get-Date
-$yesterdayAtThisTime = $date.AddDays(-1)
+$now = Get-Date
+$yesterdayAtThisTime = $now.AddDays(-1)
 
 Describe "Correct-PowerReviews" {
+  New-Item $powerReviewsZipFileFolderPath -Type Directory
+  New-Item $prodContentPath -Type Directory
+  New-Item $prodEnginePath -Type Directory
+  New-Item $prodM78Path -Type Directory
+
+  New-Item $currentFile -Type File
+  Copy-Item $currentFile $prodContentPath
+  Copy-Item $currentFile $prodEnginePath
+  Move-Item $currentFile $prodM78Path
+
+
   Context "pwr.zip doesn't exist" {
-    Mock Test-Path {return $false} -ParameterFilter {$Path -eq $powerReviewsZip}
     Mock Write-Host { }
     Mock Get-Item { }
     Mock Get-Service {return @{Status = "Running"}} -ParameterFilter {$Name -eq "W3SVC"}
 
-    Correct-PowerReviews($testDrive)
+    $content = Get-ChildItem $prodContentPath
+    $content.LastWriteTime = $yesterdayAtThisTime
 
-    It "Should check to see if the pwr.zip file exists" {
-      Assert-MockCalled Test-Path -Times 1 -ParameterFilter {$path -eq $powerReviewsZip}
-    }
+
+
+    Correct-PowerReviews($testDrive)
 
     It "Should notify the user of that the file doesn't exist" {
       Assert-MockCalled Write-Host -Times 1 -ParameterFilter {$Object -eq "The zip file isn't present."}
@@ -58,21 +75,16 @@ Describe "Correct-PowerReviews" {
   }
 
   Context "pwr.zip does exist and pwr.zip doesn't have todays date as modified" {
-    Mock Test-Path {return $true} -ParameterFilter {$Path -eq $powerReviewsZip }
-    Mock Get-Item {return @{LastWriteTime = $yesterdayAtThisTime }} -ParameterFilter {$Path -eq $powerReviewsZip}
+    Write-Zip ".\" $powerReviewsZipFileName
+    Move-Item $powerReviewsZipFileName $powerReviewsZipPath
+
+    $zip = Get-Item $powerReviewsZipPath
+    $zip.LastWriteTime = $yesterdayAtThisTime
+
     Mock Write-Host { }
     Mock Get-Service {return @{Status = "Running"}} -ParameterFilter {$Name -eq "W3SVC"}
 
-    $reuslt = Correct-PowerReviews($testDrive)
-    Write-Host $reuslt
-
-    It "Should check to see if the pwr.zip file exists" {
-      Assert-MockCalled Test-Path -Times 1 -ParameterFilter {$path -eq $powerReviewsZip}
-    }
-
-    It "Should call Get-Item on the zip file."{
-      Assert-MockCalled Get-Item -Times 1 -ParameterFilter {$Path -eq $powerReviewsZip}
-    }
+    Correct-PowerReviews($testDrive)
 
     It "Should notify the user of that the pwr.zip file exist" {
       Assert-MockCalled Write-Host -Times 1 -ParameterFilter {$Object -eq "The zip file is present."}
@@ -86,23 +98,26 @@ Describe "Correct-PowerReviews" {
       Assert-MockCalled Write-Host -Times 0 -ParameterFilter {$Object -eq "Everything is up to date in Prod."}
     }
 
-    It "Should Not Notify the User that IIS is running" {
-      Assert-MockCalled Write-Host -Times 0 -ParameterFilter {$Object -eq "Everything is up to date in Prod."}
+    It "Should Notify the User that IIS is running" {
+      Assert-MockCalled Write-Host -Times 1 -ParameterFilter {$Object -eq "IIS is running."}
     }
   }
 
   Context "pwr.zip does exist, it has today's date as modified, the production folders are from today" {
-    Mock Test-Path {return $true} -ParameterFilter {$Path -eq $pwrzipPath }
-    Mock Get-Item {return @{LastWriteTime = $date }} -ParameterFilter {$Path -eq $pwrzipPath}
+    Write-Zip ".\" $powerReviewsZipFileName
+    Move-Item $powerReviewsZipFileName $powerReviewsZipPath
 
-    Mock Test-Path {return $true} -ParameterFilter {$Path -eq $prodContentPath }
-    Mock Get-Item {return @{LastWriteTime = $date }} -ParameterFilter {$Path -eq $prodContentPath}
+    $zip = Get-Item $powerReviewsZipPath
+    $zip.LastWriteTime = $now
 
-    Mock Test-Path {return $true} -ParameterFilter {$Path -eq $prodEnginePath }
-    Mock Get-Item {return @{LastWriteTime = $date }} -ParameterFilter {$Path -eq $prodEnginePath}
+    Mock Test-Path {return $TRUE} -ParameterFilter {$Path -eq $prodContentPath }
+    Mock Get-Item {return @{LastWriteTime = $now }} -ParameterFilter {$Path -eq $prodContentPath}
 
-    Mock Test-Path {return $true} -ParameterFilter {$Path -eq $prodM78Path }
-    Mock Get-Item {return @{LastWriteTime = $date }} -ParameterFilter {$Path -eq $prodM78Path}
+    Mock Test-Path {return $TRUE} -ParameterFilter {$Path -eq $prodEnginePath }
+    Mock Get-Item {return @{LastWriteTime = $now }} -ParameterFilter {$Path -eq $prodEnginePath}
+
+    Mock Test-Path {return $TRUE} -ParameterFilter {$Path -eq $prodM78Path }
+    Mock Get-Item {return @{LastWriteTime = $now }} -ParameterFilter {$Path -eq $prodM78Path}
 
     Mock Write-Host { }
     Mock Start-Service { }
@@ -131,41 +146,68 @@ Describe "Correct-PowerReviews" {
       Assert-MockCalled Start-Service -Exactly 1 -ParameterFilter {$DisplayName -eq "World Wide Web Publishing Service"}
     }
   }
+
+  Context "pwr.zip does exist, it has today's date as modified, the at least one of the production folders are old, and the temp folders are current" {
+    Mock Test-Path {return $TRUE} -ParameterFilter {$Path -eq $pwrzipPath }
+    Mock Get-Item {return @{LastWriteTime = $now }} -ParameterFilter {$Path -eq $pwrzipPath}
+
+    Mock Test-Path {return $TRUE} -ParameterFilter {$Path -eq $prodContentPath }
+    Mock Get-Item {return @{LastWriteTime = $yesterdayAtThisTime }} -ParameterFilter {$Path -eq $prodContentPath}
+
+    Mock Test-Path {return $TRUE} -ParameterFilter {$Path -eq $prodEnginePath }
+    Mock Get-Item {return @{LastWriteTime = $now }} -ParameterFilter {$Path -eq $prodEnginePath}
+
+    Mock Test-Path {return $TRUE} -ParameterFilter {$Path -eq $prodM78Path }
+    Mock Get-Item {return @{LastWriteTime = $now }} -ParameterFilter {$Path -eq $prodM78Path}
+
+    Mock Get-ChildItem {return }
+
+    It "IIS is running" {
+
+    }
+
+    IT "IIS is not running" {
+
+    }
+
+    Mock Write-Host { }
+    Mock Start-Service { }
+  }
 }
 
 Describe "Was-Modified-Today" {
-  $path = $testDrive + "asdfasfd"
+  $wasModifiedPath = $testDrive + "asdfasfd"
 
   Context "It Was Modified Today"{
-    Mock Get-Item {return @{LastWriteTime = $date }} -ParameterFilter {$Path -eq $path}
-    Mock Test-Path {return $true } -ParameterFilter {$Path -eq $path }
+    New-Item $wasModifiedPath -Type Directory
 
-    $actual = Was-Modified-Today($path)
+    $actual = Was-Modified-Today($wasModifiedPath)
 
-    It "Should return true" {
-      $actual | Should Be $true
+    It "Should return TRUE" {
+      $actual | Should Be $TRUE
     }
   }
 
   Context "It Was Modified Yesterday"{
-    Mock Get-Item {return @{LastWriteTime = $yesterdayAtThisTime }} -ParameterFilter {$Path -eq $path}
-    Mock Test-Path {return $true } -ParameterFilter {$Path -eq $path }
+    New-Item $wasModifiedPath -Type Directory
 
-    $actual = Was-Modified-Today($path)
+    $modifiedFolder = Get-Item $wasModifiedPath
+    $modifiedFolder.LastWriteTime = $yesterdayAtThisTime
 
-    It "Should return false" {
-      $actual | Should Be $false
+    $actual = Was-Modified-Today($wasModifiedPath)
+
+    It "Should return FALSE" {
+      $actual | Should Be $FALSE
     }
   }
 
   Context "It doesn't exist"{
-    Mock Test-Path {return $false } -ParameterFilter {$Path -eq $path }
-    Mock Get-Item { return $false }
+    Mock Get-Item { return $FALSE }
 
-    $actual = Was-Modified-Today($path)
+    $actual = Was-Modified-Today($wasModifiedPath)
 
-    It "Should return false" {
-      $actual | Should Be $false
+    It "Should return FALSE" {
+      $actual | Should Be $FALSE
     }
 
     It "Should not call Get Item"{
